@@ -79,12 +79,6 @@ npm run dev
 
 ---
 
-##  License
-
-MIT License
-
----
-
 ##  Author
 
 Built with Passion by **Kartik Chouhan**
