@@ -26,7 +26,22 @@ A modern full-stack Notes Application built with **Next.js, Supabase, and Tailwi
 
 ##  Screenshots
 
-*Add screenshots here (recommended for portfolio)*
+
+###  Home Page
+
+![Home](Screenshots/Home.png)
+
+###  Login Page
+
+![Login](Screenshots/Login.png)
+
+###  Signup Page
+
+![Signup](Screenshots/Signup.png)
+
+###  Search Feature
+
+![Search](Screenshots/Search.png)
 
 ---
 
