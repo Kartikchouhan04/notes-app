@@ -1,7 +1,11 @@
-import { supabase } from "@/lib/supabase";
-import { createClient } from "@supabase/supabase-js";
-import { error, log } from "console";
-import { sup } from "framer-motion/client";
+console.log("🔥 ROOT ROUTE HIT");
+
+import { BadRequestError } from "@/lib/errors";
+import { handleError } from "@/lib/errors/handleError";
+import { requireUser } from "@/lib/middleware/auth";
+import { createNote, deleteNote, getNote, updateNote } from "@/lib/services/noteService";
+import { createServerClient } from "@/lib/supabase/server";
+import { deleteNoteSchema, CreateNoteSchema, updateNoteSchema } from "@/lib/validators/note";
 
 
 // const supabase = createClient(
@@ -16,189 +20,130 @@ import { sup } from "framer-motion/client";
 //     }
 // )
 
-
 export async function GET(req : Request) {
+
+    try {
+        
+    const supabase = createServerClient(req);
+
+    const user = await requireUser(supabase);
+   
+    const { searchParams } = new URL(req.url);
+    const topicId = searchParams.get("topicId");
+
+    const isValidUUID = (id : string) =>
+        /^[0-9a-fA-F-]{36}$/.test(id);
+
+    let safeTopicId: string | undefined = undefined;
     
-    const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            global: {
-                headers:{
-                    Authorization: req.headers.get("Authorization")!,
-                },
-            },
-        },
+    if (topicId && isValidUUID(topicId)) {
+        safeTopicId = topicId;
+    }
+
+    const notes = await getNote(
+        supabase, 
+        user.id,
+        safeTopicId,
     );
-    const { data : userData, error : userError } = await supabase.auth.getUser()
 
-    if(!userData.user || userError){
-        return Response.json([], {status:401})
-    }
-    const {data, error} = await supabase
-        .from("notes")
-        .select("*")
-        .eq("user_id", userData.user.id)
-        .order("created_at", {ascending : false})
+    return Response.json(notes);
+        
+    } catch (err : any) {
 
-    if(error){
-        return Response.json({error : error.message}, {status : 500})
+        return handleError(err);
     }
-    return Response.json(data)
 }
 
 
 export async function POST(req : Request) {
     try {
-        const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            global: {
-                headers:{
-                    Authorization: req.headers.get("Authorization")!,
-                },
-            },
-        },
-    );
+        const supabase = createServerClient(req);
         const body = await req.json()
+        const parsed = CreateNoteSchema.safeParse(body);
 
-        if(!body.text || typeof body.text !== "string"){
-            return Response.json(
-                {error : "Text is req and must be a string"},
-                {status : 400}
-            )
+        if(!parsed.success){
+           
+            throw new BadRequestError("Invalid note input")
         }
-        if(body.text.length < 3){
-            return Response.json(
-                {error : "Text must be atleast 3 characters"},
-                {status : 400}
-            )
-        }
-        const { data : userData} = await supabase.auth.getUser()
 
-        if(!userData.user){
-            return Response.json(
-                {error : "unauthorized"},
-                {status : 401}
-            )
-        }
-        const { data, error} = await supabase.from("notes").insert([
-            {
-                text : body.text,
-                user_id : userData.user.id,
-            },
-        ]).select()
+       
 
-        if(error){
-            return Response.json(
-                {error : error.message},
-                {status : 400}
-            )
-        }
-        return Response.json(data[0])
+        const user = await requireUser(supabase);
+        const note = await createNote(
+            supabase,
+            user.id,
+            parsed.data.text,
+            parsed.data.topicId,
+        )
+        return Response.json(note)
    
-    } catch (error) {
-        return Response.json(
-            {error : "invalid req body"},
-            {status : 400}
-        )
+    } catch (err : any) {
+
+        return handleError(err);
+     
     }
 }
 
 
-export async function DELETE(req : Request) {
-    try {
-        const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            global: {
-                headers:{
-                    Authorization: req.headers.get("Authorization")!,
-                },
-            },
-        },
-    );
-        const body = await req.json()
-        if(!body.id){
-            return Response.json(
-                {error : "note ID is req"},
-                {status : 400}
-            )
-        }
-        const{ data : userData} = await supabase.auth.getUser()
-        if(!userData.user){
-            return Response.json(
-                {error : "unauthorize"},
-                {status : 401}
-            )
-        }
-        const { error } = await supabase
-            .from("notes")
-            .delete()
-            .eq("id", body.id)
-            .eq("user_id", userData.user.id)
+// export async function DELETE(req : Request) {
+//     try {
+//         const supabase = createServerClient(req)
+//         const body = await req.json()
+//         const parsed = deleteNoteSchema.safeParse(body);
 
-        if(error){
-            return Response.json(
-                {error : error.message},
-                {status : 400}
-            )
-        }
-        return Response.json({success : true})
-
-    } catch (err) {
-        return Response.json(
-            {error : "invalid req"},
-            {status : 400}
-        )
+//         if(!parsed.success){
+            
+//             throw new BadRequestError("Invalid note id")
+//         }
         
-    }
-}
 
-export async function PUT(req : Request) {
+//         const user = await requireUser(supabase);
+
+//         await deleteNote(
+//             supabase,
+//             user.id,
+//             parsed.data.id
+//         )
+//         return Response.json({success : true})
+
+//     } catch (err : any) {
+
+//         return handleError(err);
+//     }
+// }
+
+
+
+
+// export async function PUT(req : Request) {
     
-    try {
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                global : {
-                    headers : {
-                        Authorization : req.headers.get("Authorization")!,
-                    }
-                }
-            }
-        )
-        const { data : userData, error : userError } = await supabase.auth.getUser();
-        if(!userData.user || userError){
-            return Response.json(
-                {error : "unauthorized" },
-                {status : 401}
-            )
-        }
-        const body = await req.json();
-        const{ data, error} = await supabase
-            .from("notes")
-            .update({ text : body.text })
-            .eq("id", body.id)
-            .eq("user_id", userData.user.id)
-            .select();
+//     try {
+//         const supabase = createServerClient(req);
+//         const body = await req.json()
+//         const parsed = updateNoteSchema.safeParse(body);
 
-        if(error){
-            return Response.json(
-                {error : error.message},
-                {status : 400}
-            )
-        }
-        return Response.json(data)
+//         if(!parsed.success){
+           
+//             throw new BadRequestError("Invalid update data");
+//         }
+
         
-    } catch (err) {
-        console.log("PUT error :", err);
-        return Response.json(
-            {error : "something went wrong"},
-            {status : 500}
-        );
-    }
-}
+
+//         const user = await requireUser(supabase);
+
+//         const updatedNote = await updateNote(
+//             supabase,
+//             user.id,
+//             parsed.data.id,
+//             parsed.data.text
+//         );
+//         console.log("BODY RECEIVED:", body);
+//         console.log("PARSED:", parsed);
+        
+//         return Response.json(updatedNote);
+        
+//     } catch (err : any) {
+        
+//         return handleError(err);
+//     }
+// }

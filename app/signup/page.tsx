@@ -52,7 +52,7 @@ export default function Signup (){
     //     </div>
     // )
     return (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white-100 via-purple-900 to-white-100 text-white relative overflow-hidden">
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-pink-900 text-white relative overflow-hidden">
 
     {/* Glow Effect */}
     <div className="absolute w-[400px] h-[400px] bg-purple-500/20 blur-3xl rounded-full"></div>

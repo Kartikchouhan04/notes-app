@@ -52,7 +52,7 @@ export default function Login(){
     //     </div>
     // )
     return (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white-100 via-purple-900 to-white-100 text-white">
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-pink-900 text-white">
 
     {/* Glass Card */}
     <div className="w-full max-w-md p-8 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 shadow-2xl">

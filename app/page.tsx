@@ -1,24 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { div } from "framer-motion/client";
 
 type note = {
   id: number;
   text: string;
-  created_at : string
+  created_at: string;
 };
 
 export default function Home() {
-  const [notes, setNotes] = useState<note[]>([]);
-  const [text, setText] = useState("");
+
+  const [topics, setTopics] = useState<any[]>([]);
+  const [topicName, setTopicName] = useState("");
+  const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [editingNote, setEditingNote] = useState<note | null>(null);
-  const [editText, setEditText] = useState("");
+
+  function getErrorMessage(data: any) {
+    if (typeof data?.error === "string") return data.error;
+    if (Array.isArray(data?.error)) {
+      return data.error[0]?.message;
+    }
+    if (data?.details) {
+      return data.details[0]?.message;
+    }
+    return "something wrong";
+  }
 
 
 
@@ -26,344 +40,361 @@ export default function Home() {
     await supabase.auth.signOut();
     router.push("/login");
   }
-
+  //auth check
   useEffect(() => {
     async function checkUser() {
       const { data } = await supabase.auth.getUser();
 
-      if (!data.user) {
-        router.push("/login");
-      }
+      if (!data.user) router.push("/login");
     }
     checkUser();
   }, []);
 
-  async function fetchNotes() {
+
+
+  async function fetchTopic() {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    const res = await fetch("/api/notes", {
+    const res = await fetch("/api/topics", {
       headers: {
         Authorization: `Bearer ${session?.access_token}`,
       },
     });
     const data = await res.json();
-    setNotes(data);
+    if (!res.ok) {
+      console.error("fetchTopics error :", data);
+      alert(getErrorMessage(data));
+      return;
+    }
+    setTopics(data);
   }
   useEffect(() => {
-    fetchNotes();
+    fetchTopic();
   }, []);
 
-  async function addNote() {
-    if (!text.trim()) {
-      alert("note cannot be empty");
+
+
+  async function addTopic() {
+    if (!topicName.trim()) {
+      alert("Topic name required");
       return;
     }
     const {
       data: { session },
     } = await supabase.auth.getSession();
-
-    const res = await fetch("/api/notes", {
+    const res = await fetch("/api/topics", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-type": "application/json",
         Authorization: `Bearer ${session?.access_token}`,
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ name: topicName }),
     });
-
-    const data = await res.json(); //
-    console.log("POST response:", data); //
-
+    const data = await res.json();
     if (!res.ok) {
-      alert(data.error);
+      console.error("addTopic error : ", data);
+      alert(getErrorMessage(data));
+      return;
+    }
+    setTopicName("");
+    fetchTopic(); //to refresh ui
+  }
+
+
+
+  async function updateTopic(id : string) {
+
+    if(!editingName.trim()) return;
+
+    setUpdatingId(id);
+
+    const { data : { session }} = await supabase.auth.getSession();
+
+    const res = await fetch(`/api/topics/${id}`,{
+      method : "PUT",
+      headers : {
+        "Content-Type" : "application/json",
+        Authorization :  `Bearer ${session?.access_token}`
+      },
+      body : JSON.stringify({ name : editingName })
+    })
+
+    const data = await res.json();
+    
+    setUpdatingId(null);
+
+    if(!res.ok){
+      alert(getErrorMessage(data))
       return;
     }
 
-    setText("");
-    fetchNotes();
-  }
-
-  async function deleteNote(id: number) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    await fetch("/api/notes", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session?.access_token}`,
-      },
-      body: JSON.stringify({ id }),
-    });
-    fetchNotes();
+    setTopics((prev) =>                           //update ui instantly
+      prev.map((t) => (t.id === id ? {...t, name: editingName} : t))  
+    );
+    setEditingTopicId(null);
+    setEditingName("");
   }
 
 
-  async function updateNote() {
-    if(!editingNote)return;
+
+  async function deleteTopic(id : string) {
+    const confirmDelete = confirm("Are you sure you want to delete this topic?");
+    if(!confirmDelete) return;
+
+    setDeletingId(id);
+
     const { data : { session }} = await supabase.auth.getSession();
 
-    const res = await fetch("/api/notes",{
-      method : "PUT",
+    const res = await fetch(`/api/topics/${id}`, {
+      method : "DELETE",
       headers : {
-        "Content-type" : "application/json",
         Authorization : `Bearer ${session?.access_token}`
-      },
-      body : JSON.stringify({
-        id : editingNote.id,
-        text : editText
-      }),
-    });
+      }
+    })
+    setDeletingId(null);
+
     if(!res.ok){
-      const data = await res.json();
-      alert(data.error || "update failed")
-      return
+      alert("failed to delete topic")
+      return;
     }
-    console.log("Editing:", editingNote);
-    console.log("Sending:", {
-      id: editingNote.id,
-      text: editText
-    });
-
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.id === editingNote.id
-          ? { ...note, text: editText }
-          : note
-      )
-    );
-
-    setEditingNote(null);
-    setEditText("")
-
+    setTopics((prev) => prev.filter((t) => t.id !== id));
   }
 
 
-  return (
-    <div className="flex h-screen bg-gradient-to-br from-white-100 via-purple-900 to-white-100 text-white">
-      {/* Sidebar */}
-      <div className="w-64 p-6 border-r border-white/10 bg-white/5 backdrop-blur-xl">
-        <h2 className="text-2xl font-bold mb-10 tracking-wide">⚡ Notes</h2>
+  // async function fetchNotes(topicId?: string) {
+  //   setLoading(true);
 
-        <ul className="space-y-4 text-gray-300">
-          <li className="hover:text-blue-400 transition cursor-pointer">
-            📄 Notes
-          </li>
-          <li className="hover:text-blue-400 transition cursor-pointer">
-            📊 Analytics
-          </li>
-          <li className="hover:text-blue-400 transition cursor-pointer">
-            ⚙️ Settings
-          </li>
-        </ul>
+  //   const {
+  //     data: { session },
+  //   } = await supabase.auth.getSession();
+
+  //   const url = topicId ? `/api/notes?topicId=${topicId}` : `/api/notes`;
+
+  //   const res = await fetch(url, {
+  //     headers: {
+  //       Authorization: `Bearer ${session?.access_token}`,
+  //     },
+  //   });
+  //   // const data = await res.json();
+  //   let data;
+  //   try {
+  //     data = await res.json();
+  //   } catch {
+  //     alert("Invalid server response");
+  //     setLoading(false);
+  //     return;
+  //   }
+  //   if (!res.ok) {
+  //     console.error("fetchNotes error : ", data);
+  //     alert(getErrorMessage(data));
+  //     setLoading(false);
+  //     return;
+  //   }
+  //   setNotes(data);
+  //   setLoading(false);
+  // }
+  // useEffect(() => {
+  //   fetchNotes();
+  // }, []);
+
+
+
+
+
+
+
+
+
+  
+//   return (
+//   <div className="flex h-screen bg-gradient-to-br from-white-100 via-purple-900 to-white-100 text-white">
+//     {/* Main */}
+//     {/* <div className="animate-wave h-1 w-20 bg-pink-400"/>       */}
+//     <div className="flex-1 p-8 overflow-y-auto">
+//       {/* Header */}
+//       <div className="flex items-center justify-between w-full mb-10">
+//         <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-pink-300 to-pink-500 bg-clip-text text-transparent">
+//           Thought Vault
+//         </h1>
+
+//         <button
+//           onClick={handleLogout}
+//           className="bg-gradient-to-r from-red-500 to-pink-500 px-5 py-2 rounded-xl hover:scale-105 active:scale-95 transition shadow-lg "
+//         >
+//           Logout
+//         </button>
+//       </div>
+
+//       {/* Page Title */}
+//       <h2 className="text-3xl font-bold mb-6">Topics</h2>
+
+//       {/* Add Topic */}
+//       <div className="flex gap-2 mb-6">
+//         <input
+//           value={topicName}
+//           onChange={(e) => setTopicName(e.target.value)}
+//           placeholder="New Topic"
+//           className="w-full p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur focus:outline-none focus:ring-2 focus:ring-blue-500 transition placeholder:text-gray-400"
+//         />
+//         <button
+//           onClick={addTopic}
+//           className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 transition font-semibold shadow-lg"
+//         >
+//           Add
+//         </button>
+//       </div>
+
+//       {/* Topics List */}
+//       {topics.length === 0 ? (
+//         <p className="text-gray-400">No topics yet</p>
+//       ) : (
+//         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+//           {topics.map((t) => (
+//             <div
+//                 key={t.id}
+//                 onClick={() => router.push(`/topics/${t.id}`)}
+//                 className="group p-6 rounded-2xl cursor-pointer bg-white/10 backdrop-blur-xl border border-white/10 hover:bg-white/20 hover:scale-[1.02] active:scale-95 transition-all duration-200 shadow-lg hover:shadow-red-700/30"
+//               >
+//               <div className=" h-1 w-10 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full mb-3 transition-all duration-300 group-hover:w-20 group-hover:animate-wave"/>
+//                 {/* Title */}
+//                 <h3 className="text-lg font-semibold text-white mb-2 break-words whitespace-pre-wrap">
+//                   {t.name}
+//                 </h3>
+//                 <p className="text-sm text-gray-300">
+//                   Click to view notes...
+//                 </p>
+//             </div>
+//           ))}
+//         </div>
+//       )}
+//     </div>
+//   </div>
+// );
+
+
+
+return (
+  <div className="flex h-screen bg-gradient-to-br from-pink-900 via-purple-900 to-pink-900 text-white">
+    <div className="flex-1 p-8 overflow-y-auto">
+      
+      {/* Header */}
+      <div className="flex items-center justify-between w-full mb-10">
+        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-pink-300 to-pink-500 bg-clip-text text-transparent">
+          Thought Vault
+        </h1>
+
+        <button
+          onClick={handleLogout}
+          className="bg-gradient-to-r from-red-500 to-pink-500 px-5 py-2 rounded-xl hover:scale-105 active:scale-95 transition shadow-lg"
+        >
+          Logout
+        </button>
       </div>
 
-      {/* Main */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between w-full mb-10">
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-pink-300 to-pink-500 bg-clip-text text-transparent">
-            Thought Vault
-          </h1>
+      {/* Page Title */}
+      <h2 className="text-3xl font-bold mb-6">Topics</h2>
 
-          <button
-            onClick={handleLogout}
-            className="bg-gradient-to-r from-red-500 to-pink-500 px-5 py-2 rounded-xl hover:scale-105 active:scale-95 transition shadow-lg"
-          >
-            Logout
-          </button>
-        </div>
-
-        {/* Input */}
-        <div className="flex gap-3 mb-10">
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Write something amazing..."
-            className="flex-1 p-4 rounded-xl bg-white/10 backdrop-blur-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          />
-
-          <button
-            onClick={addNote}
-            className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 transition font-semibold shadow-lg"
-          >
-            Add
-          </button>
-        </div>
-
-        {/* Stats */}
-        <div className="mb-10">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl w-60">
-            <h3 className="text-gray-400">Total Notes</h3>
-            <p className="text-4xl font-bold mt-2">{notes.length}</p>
-          </div>
-        </div>
-
-        {/* Search notes */}
+      {/* Add Topic */}
+      <div className="flex gap-2 mb-6">
         <input
-          placeholder="Search notes..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="mb-6 w-full p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder:text-gray-400"
+          value={topicName}
+          onChange={(e) => setTopicName(e.target.value)}
+          placeholder="New Topic"
+          className="w-full p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur focus:outline-none focus:ring-2 focus:ring-blue-500 transition placeholder:text-gray-400"
         />
 
-        {/* Notes Grid */}
-        {notes.length === 0 ? (
-          <div className="text-center text-gray-500 mt-20">
-            No notes yet. Start writing ✍️
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {notes
-              .filter((note) =>
-                note.text.toLowerCase().includes(search.toLowerCase()),
-              )
-              .map((note) => (
-                <motion.div
-                  key={note.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  whileHover={{ scale: 1.03 }}
-                  className="group relative p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 shadow-lg hover:shadow-red-900/50 transition"
-                >
-                  <p className="text-gray-200 break-words">{note.text}</p>
-
-                  {/* Edit Notes */}
-                  <button
-                    onClick={() => {
-                      setEditingNote(note);
-                      setEditText(note.text);
-                    }}
-                    className="absolute top-3 right-10 opacity-0 group-hover:opacity-100 transition text-blue-400 hover:text-blue-600"
-                  >
-                    ✏️
-                  </button>
-
-                  {/*time-notes created at*/}
-                  <p className="text-xs text-gray-400 mt-2">
-                    {new Date(note.created_at).toLocaleString()}
-                  </p>
-
-                  {/* Delete button appears on hover */}
-                  <button
-                    onClick={() => deleteNote(note.id)}
-                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition text-red-900 hover:text-red-900"
-                  >
-                    ❌
-                  </button>
-                </motion.div>
-              ))}
-          </div>
-        )}
+        <button
+          onClick={addTopic}
+          className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 transition font-semibold shadow-lg"
+        >
+          Add
+        </button>
       </div>
 
-      {/* EDIT MODAL(note) */}
-      {editingNote && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-black-sm z-50">
-          <div className="w-full max-w-md p-6 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 shadow-2xl">
-            <h2 className="text-xl font-semibold mb-4">Edit Note</h2>
-            <textarea
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              className="w-full p-4 rounded-xl bg-white/10 border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4"
-            />
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setEditingNote(null)}
-                className="px-4 py-2 rounded-lg bg-gray-500/20 hover:bg-gray-500/30"
-              >
-                Cancel
-              </button>
+      {/* Topics List */}
+      {topics.length === 0 ? (
+        <p className="text-gray-400">No topics yet</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {topics.map((t) => (
+            <div
+              key={t.id}
+              onClick={() => router.push(`/topics/${t.id}`)}
+              className="group relative p-6 rounded-2xl cursor-pointer bg-white/10 backdrop-blur-xl border border-white/10 hover:bg-white/20 hover:scale-[1.02] active:scale-95 transition-all duration-200 shadow-lg hover:shadow-red-700/30"
+            >
+              {/* Accent bar */}
+              <div className="h-1 w-10 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full mb-3 transition-all duration-300 group-hover:w-20 group-hover:animate-wave" />
 
-              <button
-                onClick={updateNote}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 hover:scale-105 transition"
-              >
-                Save
-              </button>
+              {/* ACTION BUTTONS */}
+              <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                
+                {/* EDIT */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingTopicId(t.id);
+                    setEditingName(t.name);
+                  }}
+                  className="text-xs px-2 py-1 rounded bg-white/20 hover:bg-white/30"
+                >
+                  ✏️
+                </button>
+
+                {/* DELETE */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteTopic(t.id);
+                  }}
+                  className="text-xs px-2 py-1 rounded bg-red-500/70 hover:bg-red-600"
+                >
+                  {deletingId === t.id ? "..." : "🗑️"}
+                </button>
+              </div>
+
+              {/* TITLE */}
+              {editingTopicId === t.id ? (
+              <div onClick={(e) => e.stopPropagation()}>
+                <input
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") updateTopic(t.id);
+                    if (e.key === "Escape") {
+                      setEditingTopicId(null);
+                      setEditingName("");
+                    }
+                  }}
+                  className="w-full bg-transparent border-b border-purple-400 outline-none text-lg font-semibold"
+                />
+                <p className="text-xs text-gray-400 opacity-80 mt-1">
+                  Press Enter to save • Esc to cancel
+                </p>
+              </div>
+              
+              ) : (
+                <h3 className="text-lg font-semibold text-white mb-2 break-words whitespace-pre-wrap">
+                  {t.name}
+                </h3>
+              )}
+
+              {/* LOADING STATE */}
+              {updatingId === t.id && (
+                <p className="text-xs text-blue-300">Saving...</p>
+              )}
+
+              <p className="text-sm text-gray-300">
+                Click to view notes...
+              </p>
             </div>
-          </div>
+          ))}
         </div>
       )}
     </div>
-  );
+  </div>
+);
+
 }
-
-
-  //   return (
-  //     <div className="flex h-screen bg-gradient-to-br from-black via-red-900 to-black text-white">
-
-  //       {/* Sidebar */}
-  //       <div className="w-64 bg-white/5 backdrop-blur-lg border-r border-white/10 p-6">
-  //         <h2 className="text-2xl font-bold mb-8 tracking-wide">Dashboard</h2>
-  //         <ul className="space-y-4 text-gray-300">
-  //           <li className="hover:text-blue-400 cursor-pointer transition">📄 Notes</li>
-  //           <li className="hover:text-blue-400 cursor-pointer transition">📊 Analytics</li>
-  //           <li className="hover:text-blue-400 cursor-pointer transition">📊 Settings</li>
-  //         </ul>
-  //       </div>
-
-  //       {/* Main Content */}
-  //       <div className="flex-1 p-8">
-
-  //         {/* Header */}
-  //         <div className="flex justify-between items-center mb-6">
-  //           <h1 className="text-3xl font-bold">Notes Dashboard</h1>
-  //           <button
-  //             onClick={handleLogout}
-  //             className="bg-gradient-to-r from-red-500 to-pink-500 px-5 py-2 rounded-xl hover:opacity-90 active:scale-95 transition"
-  //           >
-  //             Logout
-  //           </button>
-  //         </div>
-
-  //         {/* Input Section */}
-  //         <div className="flex gap-3 mb-8">
-  //           <input
-  //             value={text}
-  //             onChange={(e) => setText(e.target.value)}
-  //             placeholder="Write something amazing..."
-  //             className="flex-1 p-4 bg-white/5 border border-white/10 rounded-xl backdrop-blur focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-  //           />
-  //           <button
-  //             onClick={addNote}
-  //             className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 transition font-semibold"
-  //           >
-  //             Add
-  //           </button>
-  //         </div>
-
-  //         <div className="grid grid-cols-3 gap-4 mb-8">
-  //           <div className="bg-white/5 backdrop-blur border border-white/10 p-6 rounded-xl">
-  //             <h3 className="text-gray-400">Total Notes</h3>
-  //             <p className="text-3xl font-bold mt-2">{notes.length}</p>
-  //           </div>
-  //         </div>
-
-  //         {/* Notes List */}
-
-  //         <div className="grid gap-3">
-  //           {notes.map((note) => (
-  //             <motion.div
-  //               key={note.id}
-  //               initial={{ opacity : 0, y: 20 }}
-  //               animate={{ opacity : 1, y: 0 }}
-  //               whileHover={{ scale : 1.02 }}
-  //               className="flex justify-between items-center bg-white/5 border border-white/10 backdrop-blur p-5 rounded-xl shadow-lg hover:shadow-blue-500/10 transition"
-  //             >
-  //               <span>{note.text}</span>
-
-  //               <button
-  //                 onClick={() => deleteNote(note.id)}
-  //                 className="text-red-400 hover:text-red-600 transition"
-  //               >
-  //                 ❌
-  //               </button>
-  //             </motion.div>
-  //           ))}
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
