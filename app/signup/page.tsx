@@ -6,8 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { AuthLayout, PasswordField } from "@/components/AuthLayout";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-
-const MIN_PASSWORD_LENGTH = 6;
+import { MIN_PASSWORD_LENGTH } from "@/lib/constants";
 
 export default function SignupPage() {
   const router = useRouter();

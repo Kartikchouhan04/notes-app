@@ -6,6 +6,14 @@ export interface Topic {
   note_count?: number;
 }
 
+export interface Profile {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Note {
   id: string;
   text: string;

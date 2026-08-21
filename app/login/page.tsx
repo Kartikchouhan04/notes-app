@@ -90,13 +90,24 @@ export default function LoginPage() {
           />
         </div>
 
-        <PasswordField
-          value={password}
-          onChange={setPassword}
-          visible={showPassword}
-          onToggleVisible={() => setShowPassword((v) => !v)}
-          autoComplete="current-password"
-        />
+        <div>
+          <PasswordField
+            value={password}
+            onChange={setPassword}
+            visible={showPassword}
+            onToggleVisible={() => setShowPassword((v) => !v)}
+            autoComplete="current-password"
+          />
+          <div className="mt-2 text-right">
+            <button
+              type="button"
+              onClick={() => router.push("/forgot-password")}
+              className="text-[0.8125rem] text-muted underline-offset-4 transition-colors hover:text-[var(--primary)] hover:underline"
+            >
+              Forgot password?
+            </button>
+          </div>
+        </div>
 
         <Button type="submit" loading={submitting} className="mt-2 w-full">
           Sign in

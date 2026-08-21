@@ -1,8 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { apiFetch } from "@/lib/api";
+import type { Profile } from "@/lib/types";
 import { ThemeToggle } from "./ThemeToggle";
 import { IconButton } from "./ui/Button";
 import { LogOutIcon, VaultIcon } from "./ui/Icons";
@@ -14,6 +16,25 @@ export function AppHeader({ email }: { email?: string | null }) {
   const confirm = useConfirm();
   const toast = useToast();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  // Prefer the profiles row, but fall back to the auth email so the header
+  // still renders if the profiles migration hasn't been applied yet.
+  useEffect(() => {
+    let active = true;
+    apiFetch<Profile>("/api/profile")
+      .then((data) => {
+        if (active) setProfile(data);
+      })
+      .catch(() => {
+        /* falls back to the email prop */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const label = profile?.full_name || profile?.email || email;
 
   async function handleLogout() {
     const ok = await confirm({
@@ -52,9 +73,12 @@ export function AppHeader({ email }: { email?: string | null }) {
         </button>
 
         <div className="flex items-center gap-2">
-          {email && (
-            <span className="hidden max-w-[16rem] truncate rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs text-muted sm:block">
-              {email}
+          {label && (
+            <span
+              title={profile?.email ?? email ?? undefined}
+              className="hidden max-w-[16rem] truncate rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs text-muted sm:block"
+            >
+              {label}
             </span>
           )}
           <ThemeToggle />
