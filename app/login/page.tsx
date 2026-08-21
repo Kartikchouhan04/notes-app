@@ -1,104 +1,107 @@
-"use client"
+"use client";
 
-import { supabase } from "@/lib/supabase"
-import { div } from "framer-motion/client"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { AuthLayout, PasswordField } from "@/components/AuthLayout";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
-export default function Login(){
-    const[email, setEmail] = useState("")
-    const[password, setPassword] = useState("")
-    const router = useRouter()
+export default function LoginPage() {
+  const router = useRouter();
+  const toast = useToast();
 
-    async function handleLogin() {
-        const {error} = await supabase.auth.signInWithPassword({
-            email,
-            password
-        })
-        if(error) alert(error.message)
-        else router.push("/")
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (active && data.user) router.replace("/");
+    });
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
+  async function handleLogin() {
+    if (!email.trim() || !password) {
+      toast.warning("Missing details", "Enter both your email and password.");
+      return;
     }
 
-    useEffect(() => {
-        async function checkUser() {
-            const { data } = await supabase.auth.getUser()
-            
-            if(data.user){
-                router.push("/")
-            }
-        }
-        checkUser()
-    }, [])
+    setSubmitting(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    setSubmitting(false);
 
+    if (error) {
+      toast.error("Sign in failed", error.message);
+      return;
+    }
 
-    // return(
-    //     <div className="p-10">
-    //         <h1>Login</h1>
-    //         <input 
-    //             placeholder="Email"
-    //             onChange={(e) => setEmail(e.target.value)}
-    //             className="border p-2 block mb-2"
-    //         />
-    //         <input 
-    //             placeholder="Password"
-    //             type="password"
-    //             onChange={(e) => setPassword(e.target.value)}
-    //             className="border p-2 block mb-2"                
-    //         />
+    toast.success("Welcome back", "Opening your vault…");
+    router.push("/");
+  }
 
-    //         <button onClick={handleLogin} className="bg-blue-500 text-white p-2">
-    //             Login
-    //         </button>
-    //     </div>
-    // )
-    return (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-pink-900 text-white">
-
-    {/* Glass Card */}
-    <div className="w-full max-w-md p-8 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 shadow-2xl">
-
-      {/* Heading */}
-      <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-purple-300 to-pink-400 bg-clip-text text-transparent">
-        Welcome Back
-      </h1>
-
-      {/* Inputs */}
-      <div className="flex flex-col gap-4">
-
-        <input
-          type="email"
-          placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
-          className="p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder:text-gray-400"
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-          className="p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder:text-gray-400"
-        />
-
-        {/* Button */}
-        <button
-          onClick={handleLogin}
-          className="mt-2 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 hover:scale-105 active:scale-95 transition font-semibold shadow-lg"
-        >
-          Login
-        </button>
-
-        {/* Extra */}
-        <p className="text-sm text-gray-400 text-center mt-2">
-          Don’t have an account?{" "}
-          <span
+  return (
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to pick up where you left off."
+      footer={
+        <>
+          Don&apos;t have an account?{" "}
+          <button
+            type="button"
             onClick={() => router.push("/signup")}
-            className="text-pink-400 hover:underline cursor-pointer"
+            className="font-medium text-[var(--primary)] underline-offset-4 hover:underline"
           >
             Sign up
-          </span>
-        </p>
-      </div>
-    </div>
-  </div>
-);
+          </button>
+        </>
+      }
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleLogin();
+        }}
+        className="flex flex-col gap-4"
+      >
+        <div>
+          <label
+            htmlFor="email"
+            className="mb-1.5 block text-sm font-medium text-ink"
+          >
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+            className="field"
+          />
+        </div>
+
+        <PasswordField
+          value={password}
+          onChange={setPassword}
+          visible={showPassword}
+          onToggleVisible={() => setShowPassword((v) => !v)}
+          autoComplete="current-password"
+        />
+
+        <Button type="submit" loading={submitting} className="mt-2 w-full">
+          Sign in
+        </Button>
+      </form>
+    </AuthLayout>
+  );
 }

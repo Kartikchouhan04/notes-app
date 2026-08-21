@@ -1,111 +1,123 @@
-"use client"
+"use client";
 
-import { supabase } from "@/lib/supabase"
-import { div } from "framer-motion/client";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react"
-export default function Signup (){
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+import { supabase } from "@/lib/supabase";
+import { AuthLayout, PasswordField } from "@/components/AuthLayout";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
+const MIN_PASSWORD_LENGTH = 6;
 
-    async function handleSignup() {
-        const {error} = await supabase.auth.signUp({
-        email,
-        password,
-    })
-    if(error)alert(error.message)
-    else alert("check your email")
+export default function SignupPage() {
+  const router = useRouter();
+  const toast = useToast();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (active && data.user) router.replace("/");
+    });
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
+  async function handleSignup() {
+    if (!email.trim()) {
+      toast.warning("Email required", "We need an address to create the account.");
+      return;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      toast.warning(
+        "Password too short",
+        `Use at least ${MIN_PASSWORD_LENGTH} characters.`
+      );
+      return;
     }
 
-    const router = useRouter()
+    setSubmitting(true);
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+    });
+    setSubmitting(false);
 
-    useEffect(() => {
-        async function checkUser() {
-            const { data } = await supabase.auth.getUser()
+    if (error) {
+      toast.error("Sign up failed", error.message);
+      return;
+    }
 
-            if(data.user){
-                router.push("/")
-            }
-        }
-        checkUser()
-    }, [])
+    // With email confirmation on, there is no session until the link is clicked.
+    if (data.session) {
+      toast.success("Account created", "Taking you to your vault…");
+      router.push("/");
+      return;
+    }
 
-    // return(
-    //     <div>
-    //         <h1>Signup</h1>
-    //         <input  
-    //             placeholder="Email"
-    //             onChange={(e) => setEmail(e.target.value)}
-    //             className="border p-2 block mb-2"    
-    //         />
+    toast.success("Check your inbox", `We sent a confirmation link to ${email.trim()}.`);
+  }
 
-    //         <input  
-    //             placeholder="Password"
-    //             type="password"
-    //             onChange={(e) => setPassword(e.target.value)}
-    //             className="border p-2 block mb-2"
-    //         />
-    //         <button onClick={handleSignup} className="bg-blue-500 text-white p-2">
-    //             Sign up
-    //         </button>
-    //     </div>
-    // )
-    return (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-900 via-purple-900 to-pink-900 text-white relative overflow-hidden">
-
-    {/* Glow Effect */}
-    <div className="absolute w-[400px] h-[400px] bg-purple-500/20 blur-3xl rounded-full"></div>
-
-    {/* Glass Card */}
-    <div className="w-full max-w-md p-8 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 shadow-2xl z-10">
-
-      {/* Heading */}
-      <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-purple-300 to-pink-400 bg-clip-text text-transparent">
-        Create Account
-      </h1>
-
-      {/* Inputs */}
-      <div className="flex flex-col gap-4">
-
-        <input
-          type="email"
-          placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
-          className="p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder:text-gray-400"
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-          className="p-4 rounded-xl bg-white/10 border border-white/10 backdrop-blur focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder:text-gray-400"
-        />
-
-        {/* Button */}
-        <button
-          onClick={handleSignup}
-          className="mt-2 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 hover:scale-105 active:scale-95 transition font-semibold shadow-lg"
-        >
-          Sign Up
-        </button>
-
-        {/* Redirect */}
-        <p className="text-sm text-gray-400 text-center mt-2">
+  return (
+    <AuthLayout
+      title="Create your account"
+      subtitle="It takes about ten seconds."
+      footer={
+        <>
           Already have an account?{" "}
-          <span
+          <button
+            type="button"
             onClick={() => router.push("/login")}
-            className="text-pink-400 hover:underline cursor-pointer"
+            className="font-medium text-[var(--primary)] underline-offset-4 hover:underline"
           >
-            Login
-          </span>
-        </p>
+            Sign in
+          </button>
+        </>
+      }
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSignup();
+        }}
+        className="flex flex-col gap-4"
+      >
+        <div>
+          <label
+            htmlFor="email"
+            className="mb-1.5 block text-sm font-medium text-ink"
+          >
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+            className="field"
+          />
+        </div>
 
-      </div>
-    </div>
-  </div>
-);
+        <PasswordField
+          value={password}
+          onChange={setPassword}
+          visible={showPassword}
+          onToggleVisible={() => setShowPassword((v) => !v)}
+          autoComplete="new-password"
+          hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+        />
 
-
+        <Button type="submit" loading={submitting} className="mt-2 w-full">
+          Create account
+        </Button>
+      </form>
+    </AuthLayout>
+  );
 }
-

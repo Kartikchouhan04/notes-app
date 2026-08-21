@@ -1,34 +1,302 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------
+   Design tokens
+   Light is the base; dark overrides only what changes.
+   --------------------------------------------------------------- */
+
+/* Palette: deep teal primary, cyan accent, slate neutrals.
+   Chosen so both themes stay calm and every pairing below clears WCAG AA. */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f6f8f8;
+  --bg-elev: #ffffff;
+  --surface: #ffffff;
+  --surface-hover: #eff3f3;
+  --surface-sunken: #e9eeef;
+
+  --border: rgb(12 34 38 / 0.1);
+  --border-strong: rgb(12 34 38 / 0.2);
+
+  --text: #101f22;
+  --text-muted: #4f6569;
+  --text-faint: #6d8288;
+
+  --primary: #0b6b67;
+  --primary-strong: #085551;
+  --primary-soft: rgb(11 107 103 / 0.1);
+  --primary-fg: #ffffff;
+
+  --accent: #0e7490;
+
+  --success: #15803d;
+  --success-soft: rgb(21 128 61 / 0.11);
+  --warning: #a55a0b;
+  --warning-soft: rgb(165 90 11 / 0.12);
+  --danger: #b42318;
+  --danger-soft: rgb(180 35 24 / 0.1);
+  /* Destructive button fill + its label, kept as a pair so contrast holds. */
+  --danger-strong: #a3170e;
+  --danger-fg: #ffffff;
+
+  --ring: rgb(11 107 103 / 0.4);
+  --shadow-color: 195 25% 30%;
+
+  --aurora-1: rgb(11 107 103 / 0.13);
+  --aurora-2: rgb(14 116 144 / 0.1);
+}
+
+[data-theme="dark"] {
+  --bg: #0a1214;
+  --bg-elev: #0f191b;
+  --surface: #121e20;
+  --surface-hover: #1a2a2c;
+  --surface-sunken: #0d1719;
+
+  --border: rgb(255 255 255 / 0.09);
+  --border-strong: rgb(255 255 255 / 0.18);
+
+  --text: #e6edec;
+  --text-muted: #97aaac;
+  --text-faint: #6a7e81;
+
+  --primary: #4ecdc4;
+  --primary-strong: #2fb8ae;
+  --primary-soft: rgb(78 205 196 / 0.14);
+  --primary-fg: #04201e;
+
+  --accent: #56c4e0;
+
+  --success: #4ade80;
+  --success-soft: rgb(74 222 128 / 0.13);
+  --warning: #f5b841;
+  --warning-soft: rgb(245 184 65 / 0.13);
+  --danger: #f87171;
+  --danger-soft: rgb(248 113 113 / 0.13);
+  /* On a dark ground the fill stays bright, so the label goes dark instead. */
+  --danger-strong: #f87171;
+  --danger-fg: #2b0806;
+
+  --ring: rgb(78 205 196 / 0.45);
+  --shadow-color: 195 50% 2%;
+
+  --aurora-1: rgb(47 184 174 / 0.16);
+  --aurora-2: rgb(86 196 224 / 0.11);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-bg-elev: var(--bg-elev);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-sunken: var(--surface-sunken);
+
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-fg: var(--primary-fg);
+  --color-accent: var(--accent);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-strong: var(--danger-strong);
+  --color-danger-fg: var(--danger-fg);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --shadow-card: 0 1px 2px rgb(var(--shadow-color) / 0.04),
+    0 8px 24px -12px rgb(var(--shadow-color) / 0.18);
+  --shadow-lift: 0 2px 4px rgb(var(--shadow-color) / 0.06),
+    0 18px 40px -16px rgb(var(--shadow-color) / 0.3);
+  --shadow-pop: 0 24px 60px -18px rgb(var(--shadow-color) / 0.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ---------------------------------------------------------------
+   Base
+   --------------------------------------------------------------- */
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--primary-soft);
+    color: var(--text);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Scrollbars that match the theme instead of fighting it */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-faint);
+    background-clip: content-box;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ---------------------------------------------------------------
+   Components
+   --------------------------------------------------------------- */
+
+@layer components {
+  /* Ambient background wash, fixed behind all content */
+  .aurora {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        60rem 40rem at 12% -10%,
+        var(--aurora-1),
+        transparent 60%
+      ),
+      radial-gradient(
+        50rem 36rem at 92% 8%,
+        var(--aurora-2),
+        transparent 60%
+      );
+  }
+
+  .surface-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-card);
+  }
+
+  .field {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    color: var(--text);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    padding: 0.75rem 0.9375rem;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .field::placeholder {
+    color: var(--text-faint);
+  }
+  .field:hover:not(:disabled):not(:focus) {
+    border-color: var(--border-strong);
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-soft);
+  }
+  .field:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .brand-text {
+    background: linear-gradient(
+      100deg,
+      var(--primary) 0%,
+      var(--accent) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Skeleton shimmer */
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background: var(--surface-sunken);
+    border-radius: 0.5rem;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--border),
+      transparent
+    );
+    animation: shimmer 1.6s infinite;
+  }
 }
 
-/* @keyframes wave {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(2px); }
-  50% { transform: translateX(-2px); }
-  75% { transform: translateX(2px); }
-  100% { transform: translateX(0); }
-} */
+/* ---------------------------------------------------------------
+   Keyframes
+   --------------------------------------------------------------- */
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .skeleton::after {
+    display: none;
+  }
+}
