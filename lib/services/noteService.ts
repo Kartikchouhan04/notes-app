@@ -6,22 +6,43 @@ import { InternalServerError, NotFoundError } from "../errors";
  * deliberate: a policy change can't silently widen what these functions return.
  */
 
+export interface ListNotesOptions {
+  topicId?: string;
+  search?: string;
+  archived?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
 export async function getNotes(
   supabase: SupabaseClient,
   userId: string,
-  topicId?: string,
-  limit = 200,
-  offset = 0
+  options: ListNotesOptions = {}
 ) {
+  const {
+    topicId,
+    search,
+    archived = false,
+    limit = 200,
+    offset = 0,
+  } = options;
+
   let query = supabase
     .from("notes")
     .select("*")
     .eq("user_id", userId)
+    .eq("archived", archived)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (topicId) {
     query = query.eq("topic_id", topicId);
+  }
+
+  if (search) {
+    // Escape the LIKE wildcards so a literal % or _ doesn't widen the match.
+    const escaped = search.replace(/[%_]/g, (char) => `\\${char}`);
+    query = query.ilike("text", `%${escaped}%`);
   }
 
   const { data, error } = await query;
@@ -55,16 +76,24 @@ export async function createNote(
   return data;
 }
 
+export interface NoteUpdate {
+  text?: string;
+  pinned?: boolean;
+  archived?: boolean;
+  topicId?: string;
+}
+
 export async function updateNote(
   supabase: SupabaseClient,
   userId: string,
   noteId: string,
-  text?: string,
-  pinned?: boolean
+  changes: NoteUpdate
 ) {
   const payload: Record<string, unknown> = {};
-  if (text !== undefined) payload.text = text;
-  if (pinned !== undefined) payload.pinned = pinned;
+  if (changes.text !== undefined) payload.text = changes.text;
+  if (changes.pinned !== undefined) payload.pinned = changes.pinned;
+  if (changes.archived !== undefined) payload.archived = changes.archived;
+  if (changes.topicId !== undefined) payload.topic_id = changes.topicId;
 
   // Filtering on user_id means a note owned by someone else updates zero rows,
   // and the empty result below turns into a 404 rather than a silent success.
@@ -106,4 +135,23 @@ export async function deleteNote(
     throw new NotFoundError("Note not found");
   }
   return true;
+}
+
+/** Permanently removes every archived note. Used by "empty archive". */
+export async function purgeArchived(
+  supabase: SupabaseClient,
+  userId: string
+) {
+  const { data, error } = await supabase
+    .from("notes")
+    .delete()
+    .eq("user_id", userId)
+    .eq("archived", true)
+    .select("id");
+
+  if (error) {
+    console.error("purgeArchived error:", error);
+    throw error;
+  }
+  return data?.length ?? 0;
 }

@@ -18,6 +18,15 @@ export interface Note {
   id: string;
   text: string;
   created_at: string;
+  updated_at?: string;
   topic_id: string;
   pinned?: boolean;
+  archived?: boolean;
 }
+
+/** Which set of notes a workspace view is showing. */
+export type NoteScope =
+  | { kind: "all" }
+  | { kind: "pinned" }
+  | { kind: "topic"; topicId: string }
+  | { kind: "archive" };

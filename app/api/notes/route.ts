@@ -1,6 +1,6 @@
 import { handleError } from "@/lib/errors/handleError";
 import { requireUser } from "@/lib/middleware/auth";
-import { createNote, getNotes } from "@/lib/services/noteService";
+import { createNote, getNotes, purgeArchived } from "@/lib/services/noteService";
 import { createServerClient } from "@/lib/supabase/server";
 import { parseBody, readJson } from "@/lib/validators/params";
 import { createNoteSchema, listNotesQuerySchema } from "@/lib/validators/note";
@@ -16,17 +16,13 @@ export async function GET(req: Request) {
     // the user owns instead of the ones in that topic. Now it's a 400.
     const query = parseBody(listNotesQuerySchema, {
       topicId: searchParams.get("topicId") ?? undefined,
+      search: searchParams.get("search") ?? undefined,
+      archived: searchParams.get("archived") ?? undefined,
       limit: searchParams.get("limit") ?? undefined,
       offset: searchParams.get("offset") ?? undefined,
     });
 
-    const notes = await getNotes(
-      supabase,
-      user.id,
-      query.topicId,
-      query.limit,
-      query.offset
-    );
+    const notes = await getNotes(supabase, user.id, query);
 
     return Response.json(notes);
   } catch (err) {
@@ -44,6 +40,28 @@ export async function POST(req: Request) {
     const note = await createNote(supabase, user.id, body.text, body.topicId);
 
     return Response.json(note, { status: 201 });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+/** Permanently empties the archive. Only ever touches archived rows. */
+export async function DELETE(req: Request) {
+  try {
+    const supabase = createServerClient(req);
+    const user = await requireUser(supabase);
+
+    const { searchParams } = new URL(req.url);
+    if (searchParams.get("archived") !== "true") {
+      return Response.json(
+        { error: "Pass ?archived=true to empty the archive" },
+        { status: 400 }
+      );
+    }
+
+    const deleted = await purgeArchived(supabase, user.id);
+
+    return Response.json({ deleted });
   } catch (err) {
     return handleError(err);
   }

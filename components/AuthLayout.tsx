@@ -44,11 +44,18 @@ export function AuthLayout({
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       {/* Brand panel */}
       <aside className="relative hidden flex-col justify-between overflow-hidden border-r border-[var(--border)] bg-[var(--bg-elev)] p-12 lg:flex">
+        {/* Hairline grid instead of a colour wash — quieter, and it reads as
+            structure rather than decoration. */}
         <div
-          className="pointer-events-none absolute inset-0"
+          className="pointer-events-none absolute inset-0 opacity-[0.55]"
           style={{
-            background:
-              "radial-gradient(38rem 28rem at 20% 15%, var(--aurora-1), transparent 65%), radial-gradient(30rem 24rem at 85% 85%, var(--aurora-2), transparent 65%)",
+            backgroundImage:
+              "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+            maskImage:
+              "radial-gradient(60% 55% at 30% 35%, #000 20%, transparent 100%)",
+            WebkitMaskImage:
+              "radial-gradient(60% 55% at 30% 35%, #000 20%, transparent 100%)",
           }}
         />
 
@@ -56,7 +63,7 @@ export function AuthLayout({
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
             <VaultIcon size={21} />
           </span>
-          <span className="text-base font-semibold tracking-tight brand-text">
+          <span className="text-base font-semibold tracking-tight text-ink">
             Thought Vault
           </span>
         </div>
@@ -65,7 +72,7 @@ export function AuthLayout({
           <h2 className="text-4xl font-semibold leading-[1.15] tracking-tight text-ink">
             A quiet place for
             <br />
-            <span className="brand-text">everything you think.</span>
+            <span className="text-[var(--primary)]">everything you think.</span>
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-muted">
             Capture notes fast, file them under topics that make sense to you,
@@ -105,7 +112,7 @@ export function AuthLayout({
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
               <VaultIcon size={21} />
             </span>
-            <span className="text-base font-semibold tracking-tight brand-text">
+            <span className="text-base font-semibold tracking-tight text-ink">
               Thought Vault
             </span>
           </div>

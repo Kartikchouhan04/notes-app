@@ -17,13 +17,7 @@ export async function PUT(req: Request, context: RouteContext) {
 
     const body = parseBody(updateNoteSchema, await readJson(req));
 
-    const updated = await updateNote(
-      supabase,
-      user.id,
-      noteId,
-      body.text,
-      body.pinned
-    );
+    const updated = await updateNote(supabase, user.id, noteId, body);
 
     return Response.json(updated);
   } catch (err) {

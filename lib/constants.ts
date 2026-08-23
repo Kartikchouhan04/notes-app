@@ -14,3 +14,18 @@ export const MIN_PASSWORD_LENGTH = 8;
 
 /** Max notes returned by GET /api/notes in one request. */
 export const NOTES_PAGE_SIZE = 200;
+
+export const SORT_OPTIONS = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "edited", label: "Recently edited" },
+  { value: "alpha", label: "Alphabetical" },
+] as const;
+
+export type SortKey = (typeof SORT_OPTIONS)[number]["value"];
+export type ViewMode = "grid" | "list";
+
+export const STORAGE_KEYS = {
+  sort: "thought-vault-sort",
+  view: "thought-vault-view",
+} as const;

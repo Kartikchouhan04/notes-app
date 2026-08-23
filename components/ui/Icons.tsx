@@ -173,3 +173,111 @@ export const CommandIcon = (p: IconProps) => (
     <path d="M15 6a3 3 0 1 1 3 3h-3V6zM9 18a3 3 0 1 1-3-3h3v3zM18 15a3 3 0 1 1-3 3v-3h3zM6 9a3 3 0 1 1 3-3v3H6zM9 9h6v6H9z" />
   </Icon>
 );
+
+export const PinIcon = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
+  <Icon {...p} fill={filled ? "currentColor" : "none"}>
+    <path d="M9.5 3h5l-.7 5.2 3.2 3.1H6l3.2-3.1L9.5 3z" />
+    <path d="M12 11.3V21" />
+  </Icon>
+);
+
+export const ArchiveIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="4" width="18" height="4" rx="1.2" />
+    <path d="M5 8v10.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V8" />
+    <path d="M10 12h4" />
+  </Icon>
+);
+
+export const RestoreIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3 12a9 9 0 1 0 2.6-6.3" />
+    <path d="M3 4.5V10h5.5" />
+  </Icon>
+);
+
+export const CopyIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="9" y="9" width="12" height="12" rx="2" />
+    <path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5" />
+  </Icon>
+);
+
+export const MoreIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+    <circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" />
+  </Icon>
+);
+
+export const ChevronDownIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="m6 9 6 6 6-6" />
+  </Icon>
+);
+
+export const ChevronRightIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="m9 6 6 6-6 6" />
+  </Icon>
+);
+
+export const GridIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+    <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+    <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+    <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+  </Icon>
+);
+
+export const ListIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 6h13M8 12h13M8 18h13" />
+    <path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" />
+  </Icon>
+);
+
+export const SortIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 6h10M4 12h7M4 18h4" />
+    <path d="m17 9 3-3 3 3" transform="translate(-3 3)" />
+  </Icon>
+);
+
+export const LayersIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="m12 3 9 5-9 5-9-5 9-5z" />
+    <path d="m3 13 9 5 9-5" />
+  </Icon>
+);
+
+export const MoveIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h3.2a1.5 1.5 0 0 1 1.2.6l.9 1.2H16a1.5 1.5 0 0 1 1.5 1.5v1" />
+    <path d="M3 7.5v9A1.5 1.5 0 0 0 4.5 18h9" />
+    <path d="M17 21l4-4-4-4" />
+    <path d="M21 17h-8" />
+  </Icon>
+);
+
+export const MenuIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3.5 6h17M3.5 12h17M3.5 18h17" />
+  </Icon>
+);
+
+export const UserIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="8.5" r="3.75" />
+    <path d="M4.5 20.2a7.5 7.5 0 0 1 15 0" />
+  </Icon>
+);
+
+export const ClockIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7.5V12l3 1.8" />
+  </Icon>
+);

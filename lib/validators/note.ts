@@ -13,20 +13,35 @@ export const createNoteSchema = z.object({
 });
 
 /**
- * Both fields are optional so a request can change the text, the pin, or both —
- * but sending neither is a bad request rather than a silent no-op.
+ * Every field is optional so a request can change the text, the pin, the
+ * archive state, or move the note to another topic — but sending nothing at
+ * all is a bad request rather than a silent no-op.
  */
 export const updateNoteSchema = z
   .object({
     text: noteText.optional(),
     pinned: z.boolean().optional(),
+    archived: z.boolean().optional(),
+    topicId: z.uuid("Invalid topic id").optional(),
   })
-  .refine((body) => body.text !== undefined || body.pinned !== undefined, {
-    message: "Provide text or pinned to update",
-  });
+  .refine(
+    (body) =>
+      body.text !== undefined ||
+      body.pinned !== undefined ||
+      body.archived !== undefined ||
+      body.topicId !== undefined,
+    { message: "Provide a field to update" }
+  );
 
 export const listNotesQuerySchema = z.object({
   topicId: z.uuid("Invalid topic id").optional(),
+  /** Free-text filter applied server-side so it spans every page. */
+  search: z.string().trim().max(200).optional(),
+  /** "true" returns archived notes instead of active ones. */
+  archived: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => value === "true"),
   limit: z.coerce
     .number()
     .int()

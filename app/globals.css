@@ -2,86 +2,81 @@
 
 /* ---------------------------------------------------------------
    Design tokens
-   Light is the base; dark overrides only what changes.
+
+   Palette: neutral slate surfaces with a single restrained indigo
+   accent. Colour is used for meaning (primary action, state) and
+   never for decoration. Every text/background pairing below clears
+   WCAG AA at its intended size.
    --------------------------------------------------------------- */
 
-/* Palette: deep teal primary, cyan accent, slate neutrals.
-   Chosen so both themes stay calm and every pairing below clears WCAG AA. */
-
 :root {
-  --bg: #f6f8f8;
+  --bg: #f7f8fa;
   --bg-elev: #ffffff;
   --surface: #ffffff;
-  --surface-hover: #eff3f3;
-  --surface-sunken: #e9eeef;
+  --surface-hover: #f1f3f6;
+  --surface-sunken: #eceff3;
 
-  --border: rgb(12 34 38 / 0.1);
-  --border-strong: rgb(12 34 38 / 0.2);
+  --border: rgb(16 24 40 / 0.09);
+  --border-strong: rgb(16 24 40 / 0.18);
 
-  --text: #101f22;
-  --text-muted: #4f6569;
-  --text-faint: #6d8288;
+  --text: #101828;
+  --text-muted: #525c6b;
+  --text-faint: #737e8d;
 
-  --primary: #0b6b67;
-  --primary-strong: #085551;
-  --primary-soft: rgb(11 107 103 / 0.1);
+  --primary: #3a55d9;
+  --primary-strong: #2f46b8;
+  --primary-soft: rgb(58 85 217 / 0.09);
   --primary-fg: #ffffff;
 
-  --accent: #0e7490;
+  --accent: #5b6b8c;
 
-  --success: #15803d;
-  --success-soft: rgb(21 128 61 / 0.11);
-  --warning: #a55a0b;
-  --warning-soft: rgb(165 90 11 / 0.12);
+  --success: #157347;
+  --success-soft: rgb(21 115 71 / 0.11);
+  --warning: #9a5b06;
+  --warning-soft: rgb(154 91 6 / 0.12);
   --danger: #b42318;
   --danger-soft: rgb(180 35 24 / 0.1);
   /* Destructive button fill + its label, kept as a pair so contrast holds. */
   --danger-strong: #a3170e;
   --danger-fg: #ffffff;
 
-  --ring: rgb(11 107 103 / 0.4);
-  --shadow-color: 195 25% 30%;
-
-  --aurora-1: rgb(11 107 103 / 0.13);
-  --aurora-2: rgb(14 116 144 / 0.1);
+  --ring: rgb(58 85 217 / 0.38);
+  --shadow-color: 220 30% 25%;
 }
 
 [data-theme="dark"] {
-  --bg: #0a1214;
-  --bg-elev: #0f191b;
-  --surface: #121e20;
-  --surface-hover: #1a2a2c;
-  --surface-sunken: #0d1719;
+  --bg: #0c1017;
+  --bg-elev: #12171f;
+  --surface: #151b24;
+  --surface-hover: #1d242f;
+  --surface-sunken: #10151d;
 
   --border: rgb(255 255 255 / 0.09);
   --border-strong: rgb(255 255 255 / 0.18);
 
-  --text: #e6edec;
-  --text-muted: #97aaac;
-  --text-faint: #6a7e81;
+  --text: #e7eaef;
+  --text-muted: #9aa4b4;
+  --text-faint: #6f7988;
 
-  --primary: #4ecdc4;
-  --primary-strong: #2fb8ae;
-  --primary-soft: rgb(78 205 196 / 0.14);
-  --primary-fg: #04201e;
+  --primary: #8fa4ff;
+  --primary-strong: #7a92ff;
+  --primary-soft: rgb(143 164 255 / 0.14);
+  --primary-fg: #0b1020;
 
-  --accent: #56c4e0;
+  --accent: #93a3c0;
 
   --success: #4ade80;
   --success-soft: rgb(74 222 128 / 0.13);
-  --warning: #f5b841;
-  --warning-soft: rgb(245 184 65 / 0.13);
-  --danger: #f87171;
-  --danger-soft: rgb(248 113 113 / 0.13);
+  --warning: #f0b429;
+  --warning-soft: rgb(240 180 41 / 0.13);
+  --danger: #f27573;
+  --danger-soft: rgb(242 117 115 / 0.13);
   /* On a dark ground the fill stays bright, so the label goes dark instead. */
-  --danger-strong: #f87171;
+  --danger-strong: #f27573;
   --danger-fg: #2b0806;
 
-  --ring: rgb(78 205 196 / 0.45);
-  --shadow-color: 195 50% 2%;
-
-  --aurora-1: rgb(47 184 174 / 0.16);
-  --aurora-2: rgb(86 196 224 / 0.11);
+  --ring: rgb(143 164 255 / 0.45);
+  --shadow-color: 220 60% 2%;
 }
 
 @theme inline {
@@ -116,11 +111,14 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --shadow-card: 0 1px 2px rgb(var(--shadow-color) / 0.04),
-    0 8px 24px -12px rgb(var(--shadow-color) / 0.18);
-  --shadow-lift: 0 2px 4px rgb(var(--shadow-color) / 0.06),
-    0 18px 40px -16px rgb(var(--shadow-color) / 0.3);
-  --shadow-pop: 0 24px 60px -18px rgb(var(--shadow-color) / 0.4);
+  /* Tighter, flatter shadows than before — depth by hairline, not by glow. */
+  --shadow-card: 0 1px 2px rgb(var(--shadow-color) / 0.05);
+  --shadow-lift: 0 1px 2px rgb(var(--shadow-color) / 0.06),
+    0 8px 20px -10px rgb(var(--shadow-color) / 0.22);
+  --shadow-pop: 0 16px 44px -14px rgb(var(--shadow-color) / 0.35);
+
+  /* One easing curve everywhere, so motion reads as a single system. */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* ---------------------------------------------------------------
@@ -183,29 +181,10 @@
    --------------------------------------------------------------- */
 
 @layer components {
-  /* Ambient background wash, fixed behind all content */
-  .aurora {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      radial-gradient(
-        60rem 40rem at 12% -10%,
-        var(--aurora-1),
-        transparent 60%
-      ),
-      radial-gradient(
-        50rem 36rem at 92% 8%,
-        var(--aurora-2),
-        transparent 60%
-      );
-  }
-
   .surface-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 1rem;
+    border-radius: 0.75rem;
     box-shadow: var(--shadow-card);
   }
 
@@ -213,15 +192,15 @@
     width: 100%;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
     color: var(--text);
     font-size: 0.9375rem;
     line-height: 1.5;
-    padding: 0.75rem 0.9375rem;
+    padding: 0.625rem 0.875rem;
     transition:
-      border-color 0.15s ease,
-      box-shadow 0.15s ease,
-      background-color 0.15s ease;
+      border-color 0.15s var(--ease-standard),
+      box-shadow 0.15s var(--ease-standard),
+      background-color 0.15s var(--ease-standard);
   }
   .field::placeholder {
     color: var(--text-faint);
@@ -239,15 +218,29 @@
     cursor: not-allowed;
   }
 
-  .brand-text {
-    background: linear-gradient(
-      100deg,
-      var(--primary) 0%,
-      var(--accent) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  /* Sidebar / menu row */
+  .nav-row {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    padding: 0.5rem 0.625rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-align: left;
+    transition:
+      background-color 0.13s var(--ease-standard),
+      color 0.13s var(--ease-standard);
+  }
+  .nav-row:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+  .nav-row[data-active="true"] {
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: 500;
   }
 
   /* Skeleton shimmer */
@@ -255,7 +248,7 @@
     position: relative;
     overflow: hidden;
     background: var(--surface-sunken);
-    border-radius: 0.5rem;
+    border-radius: 0.375rem;
   }
   .skeleton::after {
     content: "";
@@ -268,7 +261,24 @@
       var(--border),
       transparent
     );
-    animation: shimmer 1.6s infinite;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Keyboard hint */
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    padding: 0.0625rem 0.3125rem;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 0.25rem;
+    background: var(--surface-sunken);
+    color: var(--text-faint);
+    font-family: inherit;
+    font-size: 0.6875rem;
+    line-height: 1.4;
   }
 }
 
